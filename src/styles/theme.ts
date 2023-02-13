@@ -6,7 +6,7 @@ export const theme = extendTheme({
     styles: {
         global: () => ({
             body: {
-                bg: 'transparent'
+                bg: '#2D3748'
             }
         })
     }

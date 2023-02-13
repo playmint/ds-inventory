@@ -12,8 +12,8 @@ function App({ Component, pageProps }: any) {
     return (
         <Fragment>
             <Head>
-                <title>NextJS Boilerplate</title>
-                <meta name="description" content="Boilerplate project for NextJS 12.x" />
+                <title>Inventory plugin</title>
+                <meta name="description" content="Inventory plugin" />
                 <link rel="icon" href="/favicon.ico" />
             </Head>
             <Global styles={resetStyles} />

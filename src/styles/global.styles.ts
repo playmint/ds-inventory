@@ -5,6 +5,6 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 
 export const globalStyles = css`
     body {
-        background: transparent;
+        background-color: transparent;
     }
 `;

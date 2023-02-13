@@ -12,8 +12,10 @@ export interface CogPluginContextProviderProps {
 
 export interface CogPluginContextStore {
     isReady: boolean;
+    account: string;
     registerPlugin: (width: number, height: number, anchor: Anchor) => void;
-    dispatch: (actionName: string, ...actionArgs: any) => void;
+    dispatchAction: (actionName: string, ...actionArgs: any) => void;
+    dispatchActionEncoded: (actionHex: string) => void;
     openModal: (url: string) => void;
     closeModal: () => void;
 }
@@ -24,6 +26,7 @@ export const useCogPlugin = () => useContext(CogPluginContext);
 
 export const CogPluginProvider = ({ children, gameID, actions }: CogPluginContextProviderProps) => {
     const [isReady, setIsReady] = useState<boolean>(false);
+    const [account, setAccount] = useState('');
 
     const registerPlugin = (width: number, height: number, anchor: Anchor) => {
         // todo handle being the top level window
@@ -49,19 +52,30 @@ export const CogPluginProvider = ({ children, gameID, actions }: CogPluginContex
         );
     };
 
-    const dispatch = (actionName: string, ...actionArgs: any) => {
+    const dispatchAction = (actionName: string, ...actionArgs: any) => {
         // todo handle being the top level window
         if (!window.top) return;
         if (!actions) return;
 
+        // console.log(`CogPluginProvider.dispatch: gameID: ${gameID} actionName: ${actionName}`);
+
+        const action = actions.encodeFunctionData(actionName, actionArgs);
+
+        dispatchActionEncoded(action);
+    };
+
+    const dispatchActionEncoded = (action: string) => {
+        // todo handle being the top level window
+        if (!window.top) return;
+
+        // console.log(`CogPluginProvider.dispatchActionEncoded: action: ${action}`);
+
         // todo use the full url not just the path
         const url = window.location.pathname;
-        const action = actions.encodeFunctionData(actionName, actionArgs);
-        console.log(`CogPluginProvider.dispatch: gameID: ${gameID} actionName: ${actionName} action: ${action}`);
 
         window.top.postMessage(
             {
-                method: 'dispatch',
+                method: 'dispatchAction',
                 args: {
                     url,
                     gameID,
@@ -96,24 +110,30 @@ export const CogPluginProvider = ({ children, gameID, actions }: CogPluginContex
     };
 
     useEffect(() => {
-        const handleMessage = (event: any) => {
-            const { method } = event.data;
-            if (method == 'ready') {
-                console.log('Ready', window.location.pathname.replace(/\/+$/, ''));
-                setIsReady(true);
+        const handleMessage = (message: any) => {
+            const { method, args } = message.data;
+            switch (method) {
+                case 'ready': {
+                    const [account] = args;
+                    console.log('handle shell message: Inventory received ready. account: ', account);
+                    setAccount(account);
+                    setIsReady(true);
+                    break;
+                }
             }
         };
 
-        // wait for message from parent to say ready
         window.addEventListener('message', handleMessage);
 
         return () => window.removeEventListener('message', handleMessage);
-    }, []);
+    });
 
     const store: CogPluginContextStore = {
         isReady,
+        account,
         registerPlugin,
-        dispatch,
+        dispatchAction,
+        dispatchActionEncoded,
         openModal,
         closeModal
     };
