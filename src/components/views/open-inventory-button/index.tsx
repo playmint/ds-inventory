@@ -62,7 +62,7 @@ export const OpenInventoryButton: FunctionComponent<OpenLeaderboardButtonProps> 
 
     return (
         <StyledOpenLeaderboardButton {...otherProps}>
-            <IconButton aria-label="Open inventory" icon={icon} onClick={handleOpenInventory} />
+            <IconButton colorScheme="blue" aria-label="Open inventory" icon={icon} onClick={handleOpenInventory} />
         </StyledOpenLeaderboardButton>
     );
 };
