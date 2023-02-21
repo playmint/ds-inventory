@@ -1,6 +1,6 @@
 /** @format */
 
-import { FunctionComponent, useEffect, Fragment } from 'react';
+import { FunctionComponent, useEffect, Fragment, useState, useRef } from 'react';
 import styled from '@emotion/styled';
 import { ComponentProps } from '@app/types/component-props';
 import { useCogPlugin } from '@app/contexts/cog-plugin-provider';
@@ -10,7 +10,9 @@ import { getSeeker, getTile } from '@app/helpers/inventory';
 import { TileCoords } from '@app/types/title-coords';
 import { Bag } from '@app/components/molecules/bag';
 import { BagModel } from '@app/types/inventory';
-import { DndContext, DragEndEvent } from '@dnd-kit/core';
+import { Active, DndContext, DragEndEvent, Over } from '@dnd-kit/core';
+import { StackSplitter } from '@app/components/molecules/stack-splitter';
+import { useDisclosure } from '@chakra-ui/react';
 
 export interface InventoryProps extends ComponentProps {}
 
@@ -32,11 +34,15 @@ export const Inventory: FunctionComponent<InventoryProps> = (props: InventoryPro
     const { closeModal, dispatchAction } = useCogPlugin();
     const { state } = useGameStateContext();
     const { query } = useRouter();
+    const [isControlPressed, setIsControlPressed] = useState<boolean>(false);
+    const [isShiftPressed, setIsShiftPressed] = useState<boolean>(false);
+    const { isOpen, onOpen, onClose } = useDisclosure();
+    const onConfirm = useRef<(quantity: number) => void>();
+    const numItems = useRef<number>(0);
 
     // get our seeker
     const account = query.account?.toString() || '';
     const seeker = state ? getSeeker(state, account) : null;
-    console.log('seeker bags: ', seeker?.bags);
 
     // get the selected tile's bag
     const { q, r, s } = query;
@@ -45,28 +51,68 @@ export const Inventory: FunctionComponent<InventoryProps> = (props: InventoryPro
             ? ([parseInt(q.toString()), parseInt(r.toString()), parseInt(s.toString())] as TileCoords)
             : undefined;
     const selectedTile = state && tilePos ? getTile(state, tilePos) : null;
-    console.log('tile bags: ', selectedTile?.bags);
 
-    function handleEscape(event: KeyboardEvent) {
-        const escapeKeyCode = 27;
+    // key codes
+    const shiftKeyCode = 16;
+    const controlKeyCode = 17;
+    const escapeKeyCode = 27;
+
+    function handleKeydown(event: KeyboardEvent) {
         if (event.key === 'Escape' || event.keyCode === escapeKeyCode) {
             closeModal();
+        }
+        if (event.key === 'Control' || event.keyCode === controlKeyCode) {
+            setIsControlPressed(true);
+        }
+        if (event.key === 'Shift' || event.keyCode === shiftKeyCode) {
+            setIsShiftPressed(true);
+        }
+    }
+
+    function handleKeyup(event: KeyboardEvent) {
+        if (event.key === 'Control' || event.keyCode === controlKeyCode) {
+            setIsControlPressed(false);
+        }
+        if (event.key === 'Shift' || event.keyCode === shiftKeyCode) {
+            setIsShiftPressed(false);
         }
     }
 
     useEffect(() => {
-        window.addEventListener('keydown', handleEscape);
+        window.addEventListener('keydown', handleKeydown);
+        window.addEventListener('keyup', handleKeyup);
 
         return () => {
-            window.removeEventListener('keydown', handleEscape);
+            window.removeEventListener('keydown', handleKeydown);
+            window.removeEventListener('keyup', handleKeyup);
         };
     }, []);
 
     const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
 
-        console.log(active, over);
+        if (!over?.data?.current || !active?.data?.current) {
+            return;
+        }
 
+        if (isShiftPressed) {
+            onConfirm.current = (quantity: number) => {
+                transferItem(active, over, quantity);
+            };
+            numItems.current = active?.data.current['balance'];
+            onOpen();
+            return;
+        }
+
+        if (isControlPressed) {
+            transferItem(active, over, Math.min(active?.data.current['balance'], 100));
+            return;
+        }
+
+        transferItem(active, over, active?.data.current['balance']);
+    };
+
+    const transferItem = (active: Active, over: Over, quantity?: number) => {
         if (!seeker || !selectedTile || !over?.data?.current || !active?.data?.current) {
             return;
         }
@@ -77,7 +123,6 @@ export const Inventory: FunctionComponent<InventoryProps> = (props: InventoryPro
         const toEquipIndex = over.data.current['equipIndex'];
         const fromSlotIndex = active.data.current['slotIndex'];
         const toSlotIndex = over.data.current['slotIndex'];
-        const quantity = active?.data.current['balance'];
 
         dispatchAction(
             'TRANSFER_ITEM_SEEKER',
@@ -89,6 +134,8 @@ export const Inventory: FunctionComponent<InventoryProps> = (props: InventoryPro
         );
     };
 
+    const maxBagSlots = 4;
+
     return (
         <DndContext onDragEnd={handleDragEnd}>
             <StyledInventory {...otherProps}>
@@ -96,7 +143,14 @@ export const Inventory: FunctionComponent<InventoryProps> = (props: InventoryPro
                     <Fragment>
                         <h2>Seeker bags</h2>
                         {seeker.bags.map((bag: BagModel, index) => (
-                            <Bag key={index} bag={bag} equipIndex={index} id={seeker.id} className="bag" />
+                            <Bag
+                                key={index}
+                                bag={bag}
+                                equipIndex={index}
+                                id={seeker.id}
+                                className="bag"
+                                maxBagSlots={maxBagSlots}
+                            />
                         ))}
                     </Fragment>
                 )}
@@ -104,10 +158,23 @@ export const Inventory: FunctionComponent<InventoryProps> = (props: InventoryPro
                     <Fragment>
                         <h2>Tile bags</h2>
                         {selectedTile.bags.map((bag: BagModel, index) => (
-                            <Bag key={index} bag={bag} equipIndex={index} id={selectedTile.id} className="bag" />
+                            <Bag
+                                key={index}
+                                bag={bag}
+                                equipIndex={index}
+                                id={selectedTile.id}
+                                className="bag"
+                                maxBagSlots={maxBagSlots}
+                            />
                         ))}
                     </Fragment>
                 )}
+                <StackSplitter
+                    numItems={numItems.current}
+                    onClose={onClose}
+                    isOpen={isOpen}
+                    onConfirm={onConfirm.current}
+                />
             </StyledInventory>
         </DndContext>
     );
