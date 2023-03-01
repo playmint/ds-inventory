@@ -28,11 +28,6 @@ export interface StackSplitterProps extends ComponentProps {
 
 const StyledStackSplitter = styled('div')`
     position: relative;
-
-    .buttons Button {
-        margin-top: 5px;
-        margin-left: 5px;
-    }
 `;
 
 export const StackSplitter: FunctionComponent<StackSplitterProps> = (props: StackSplitterProps) => {
@@ -62,7 +57,7 @@ export const StackSplitter: FunctionComponent<StackSplitterProps> = (props: Stac
         <StyledStackSplitter {...otherProps}>
             <Modal isOpen={isOpen} onClose={onClose}>
                 <ModalContent>
-                    <ModalHeader>Modal Title</ModalHeader>
+                    <ModalHeader>Split stack</ModalHeader>
                     <ModalCloseButton />
                     <ModalBody>
                         <NumberInput min={0} max={numItems} onChange={handleOnChange} defaultValue={numItems}>
@@ -74,8 +69,12 @@ export const StackSplitter: FunctionComponent<StackSplitterProps> = (props: Stac
                         </NumberInput>
                     </ModalBody>
                     <ModalFooter className="buttons">
-                        <Button onClick={handleCancel}>Cancel</Button>
-                        <Button onClick={handleConfirm}>OK</Button>
+                        <Button onClick={handleCancel} mr={1}>
+                            Cancel
+                        </Button>
+                        <Button onClick={handleConfirm} colorScheme="blue">
+                            OK
+                        </Button>
                     </ModalFooter>
                 </ModalContent>
             </Modal>

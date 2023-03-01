@@ -26,7 +26,7 @@ fragment stateFragment on State {
         }
         bags: nodes(match: {kinds: ["Bag"], via: {rel: "Equip", dir: OUT}}) {
             id
-            slots: edges(match: {kinds: ["Resource"], via: {rel: "Balance"}}) {
+            slots: edges(match: {kinds: ["Resource", "Item"], via: {rel: "Balance"}}) {
                 slot: key
                 balance: weight
                 resource: node{ id }
@@ -45,8 +45,8 @@ fragment stateFragment on State {
 
         # Querying this as the key wasn't 0 as expected but 5
         bagEdges: edges(match: {kinds: ["Bag"], via: {rel: "Equip"}}){
-        	key
-        }     
+            key
+        }
     }
 
     buildings: nodes(match: { kinds: ["Building"] }) {
@@ -87,7 +87,7 @@ fragment stateFragment on State {
         biome: value(match: { via: [{ rel: "Biome" }] }) # 0=UNDISCOVERED, 1=DISCOVERED
         bags: nodes(match: {kinds: ["Bag"], via: {rel: "Equip", dir: OUT}}) {
             id
-            slots: edges(match: {kinds: ["Resource"], via: {rel: "Balance"}}) {
+            slots: edges(match: {kinds: ["Resource", "Item"], via: {rel: "Balance"}}) {
                 slot: key
                 balance: weight
                 resource: node{ id }

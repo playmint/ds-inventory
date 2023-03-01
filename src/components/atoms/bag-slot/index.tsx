@@ -6,7 +6,8 @@ import { ComponentProps } from '@app/types/component-props';
 import { BagItem } from '@app/components/atoms/bag-item';
 import { useDroppable } from '@dnd-kit/core';
 import { SlotModel } from '@app/types/inventory';
-import { resources } from '@app/fixtures/resources';
+import { resourceRegex, resources } from '@app/fixtures/resources';
+import { getItemName } from '@app/helpers/inventory';
 
 export interface BagSlotProps extends ComponentProps {
     equipIndex: number;
@@ -42,13 +43,21 @@ export const BagSlot: FunctionComponent<BagSlotProps> = (props: BagSlotProps) =>
         }
     });
 
+    function isResource(id: string) {
+        return id.match(resourceRegex);
+    }
+
+    function getSlotName(slot: SlotModel) {
+        return isResource(slot.resource.id) ? resources[slot.resource.id] : getItemName(slot.resource.id);
+    }
+
     return (
         <StyledBagSlot ref={setNodeRef} {...otherProps}>
             {slot && slot.balance > 0 && (
                 <BagItem
                     equipIndex={equipIndex}
                     slotIndex={slotIndex}
-                    name={resources[slot.resource.id]}
+                    name={getSlotName(slot)}
                     balance={slot.balance}
                     id={id}
                 />
