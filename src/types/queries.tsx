@@ -630,7 +630,7 @@ export const StateFragmentFragmentDoc = gql`
             }
             bags: nodes(match: { kinds: ["Bag"], via: { rel: "Equip", dir: OUT } }) {
                 id
-                slots: edges(match: { kinds: ["Resource"], via: { rel: "Balance" } }) {
+                slots: edges(match: { kinds: ["Resource", "Item"], via: { rel: "Balance" } }) {
                     slot: key
                     balance: weight
                     resource: node {
@@ -677,7 +677,7 @@ export const StateFragmentFragmentDoc = gql`
             biome: value(match: { via: [{ rel: "Biome" }] })
             bags: nodes(match: { kinds: ["Bag"], via: { rel: "Equip", dir: OUT } }) {
                 id
-                slots: edges(match: { kinds: ["Resource"], via: { rel: "Balance" } }) {
+                slots: edges(match: { kinds: ["Resource", "Item"], via: { rel: "Balance" } }) {
                     slot: key
                     balance: weight
                     resource: node {

@@ -38,3 +38,10 @@ export const isSamePos = (a: TileCoords, b: TileCoords) => {
 
     return true;
 };
+
+export const getItemName = (itemID: string): string => {
+    const last15Bytes = itemID.slice(-30, -16);
+    const asciiString = ethers.utils.toUtf8String('0x' + last15Bytes);
+
+    return asciiString;
+};
